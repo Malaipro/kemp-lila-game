@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
-import { useMainButton, useHapticFeedback } from "@vkruglikov/react-telegram-web-app";
+import React, { useState, useCallback } from "react";
+import { useHapticFeedback } from "@vkruglikov/react-telegram-web-app";
 import Board from "./Board";
 import Dice from "./Dice";
 import { createInitialState, rollDice, computeMove } from "@/lib/game";
@@ -13,18 +13,12 @@ export default function Game() {
   const [rolling, setRolling] = useState(false);
   const [modalCell, setModalCell] = useState<Cell | null>(null);
 
-  const [showMainButton, hideMainButton] = useMainButton();
-  const [impact] = useHapticFeedback();
-
-  useEffect(() => {
-    showMainButton({ text: "Новая игра" });
-    return () => hideMainButton();
-  }, [showMainButton, hideMainButton]);
+  const [impactOccurred, notificationOccurred] = useHapticFeedback();
 
   const handleRoll = useCallback(() => {
     if (state.phase === "ended") return;
     setRolling(true);
-    impact("light");
+    impactOccurred("light");
 
     setTimeout(() => {
       const dice = rollDice();
@@ -33,9 +27,9 @@ export default function Game() {
       setRolling(false);
 
       if (newState.lastMove?.viaSnakeOrArrow) {
-        impact("heavy");
+        impactOccurred("heavy");
       } else {
-        impact("medium");
+        impactOccurred("medium");
       }
 
       // Показать модалку клетки
@@ -45,10 +39,10 @@ export default function Game() {
       }
 
       if (newState.winner) {
-        impact("notification", "success");
+        notificationOccurred("success");
       }
     }, 800);
-  }, [state, impact]);
+  }, [state, impactOccurred, notificationOccurred]);
 
   const currentPlayer = state.players[state.currentPlayerIndex];
 
