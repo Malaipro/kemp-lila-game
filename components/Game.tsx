@@ -48,7 +48,7 @@ export default function Game() {
 
   return (
     <div className="flex flex-col items-center gap-4 p-4 min-h-screen bg-kemp-dark text-white">
-      <h1 className="text-xl font-bold text-kemp-accent tracking-wider">КЭМП — ЛИЛА</h1>
+      <h1 className="text-xl font-bold text-kemp-accent tracking-wider">ПОЛЕ КЭМП</h1>
 
       <div className="flex items-center gap-4 text-sm text-gray-400">
         <div className="flex items-center gap-2">
@@ -80,16 +80,22 @@ export default function Game() {
       {/* Модалка клетки */}
       {modalCell && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setModalCell(null)}>
-          <div className="bg-kemp-panel border border-kemp-accent/20 rounded-2xl p-6 max-w-sm w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-kemp-panel border border-kemp-accent/20 rounded-2xl p-6 max-w-sm w-full shadow-2xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-bold text-kemp-accent">{modalCell.name}</h2>
               <span className="text-xs px-2 py-1 rounded bg-white/10">{modalCell.id}/72</span>
             </div>
             <p className="text-sm text-gray-300 leading-relaxed mb-4">{modalCell.description}</p>
             {modalCell.task && (
-              <div className="bg-kemp-dark rounded-lg p-3 border-l-2 border-kemp-accent">
+              <div className="bg-kemp-dark rounded-lg p-3 border-l-2 border-kemp-accent mb-3">
                 <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Задание</p>
                 <p className="text-sm text-white">{modalCell.task}</p>
+              </div>
+            )}
+            {modalCell.reflection && (
+              <div className="bg-kemp-dark rounded-lg p-3 border-l-2 border-kemp-red">
+                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Спроси себя</p>
+                <p className="text-sm text-white italic">{modalCell.reflection}</p>
               </div>
             )}
             <button

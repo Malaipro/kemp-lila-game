@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "КЭМП — ЛИЛА",
-  description: "Игра самопознания для мужчин",
+  title: "ПОЛЕ КЭМП",
+  description: "Игра самопознания для мужчин сообщества КЭМП",
 };
 
 export const viewport: Viewport = {

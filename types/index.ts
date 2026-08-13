@@ -8,6 +8,7 @@ export interface Cell {
   jumpTo?: number;
   description: string;
   task?: string;
+  reflection?: string; // "Спроси себя"
 }
 
 export interface Player {
