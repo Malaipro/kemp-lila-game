@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>КЭМП-ЛИЛА — Прототип</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0A0A0A;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            overflow-x: hidden;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .header img { height: 32px; width: auto; }
+        .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 2px; color: #C41E3A; }
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: #9CA3AF;
+            margin-bottom: 8px;
+        }
+        .player-dot { width: 8px; height: 8px; border-radius: 50%; background: #C41E3A; }
+        #board {
+            background: #141414;
+            border-radius: 12px;
+            padding: 6px;
+            margin-bottom: 12px;
+        }
+        .dice-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .dice {
+            width: 64px; height: 64px;
+            background: #141414;
+            border: 1px solid #C41E3A;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .dice:active { transform: scale(0.95); }
+        .dice.rolling { background: #E8B923; color: #000; border-color: #E8B923; }
+        .dice-hint { font-size: 11px; color: #6B7280; }
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: #141414;
+            border: 1px solid rgba(196,30,58,0.2);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%; max-width: 340px;
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px;
+        }
+        .modal-title { font-size: 16px; font-weight: 700; color: #C41E3A; text-transform: uppercase; }
+        .modal-id { font-size: 11px; color: #9CA3AF; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; }
+        .modal-desc { font-size: 13px; color: #D1D5DB; line-height: 1.6; margin-bottom: 12px; }
+        .modal-task {
+            background: #0A0A0A;
+            border-left: 2px solid #C41E3A;
+            border-radius: 0 8px 8px 0;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+        }
+        .modal-task-label { font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .modal-task-text { font-size: 13px; color: #fff; }
+        .modal-btn {
+            width: 100%; padding: 10px;
+            background: #C41E3A; color: #000;
+            border: none; border-radius: 8px;
+            font-size: 13px; font-weight: 700;
+            cursor: pointer;
+        }
+        .modal-btn:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="../public/logo-fist.png" alt="КЭМП">
+        <h1>КЭМП — ЛИЛА</h1>
+    </div>
+    <div class="status">
+        <div class="player-dot"></div>
+        <span>Игрок 1</span>
+        <span>•</span>
+        <span id="pos">Клетка 0/72</span>
+    </div>
+    <svg id="board" width="364" height="410" viewBox="0 0 364 410"></svg>
+    <div class="dice-container">
+        <div class="dice" id="dice">🎲</div>
+        <div class="dice-hint" id="hint">Нажми, чтобы бросить</div>
+    </div>
+
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="m-title">РОЖДЕНИЕ</div>
+                <div class="modal-id" id="m-id">1/72</div>
+            </div>
+            <div class="modal-desc" id="m-desc">Ты вступил на путь...</div>
+            <div class="modal-task" id="m-task-box">
+                <div class="modal-task-label">Задание</div>
+                <div class="modal-task-text" id="m-task">Напиши 3 качества...</div>
+            </div>
+            <button class="modal-btn" onclick="closeModal()">Продолжить путь</button>
+        </div>
+    </div>
+
+<script>
+const COLS = 8, ROWS = 9, SIZE = 44, GAP = 2;
+const TOTAL = 72;
+const LEVELS = ['','#8B2635','#D4652A','#E8B923','#4A7C59','#2E5AAC','#6B3FA0'];
+const NAMES = {1:'РОЖДЕНИЕ',2:'ПЕРВЫЙ ШАГ',6:'ТРЕНИРОВКА',9:'ВЫНОСЛИВОСТЬ',14:'ПОКОЙ',17:'ДИСЦИПЛИНА',23:'РЕШИМОСТЬ',28:'БЛАГОДАРНОСТЬ',32:'МУЖЕСТВО',35:'ПРОЗРЕНИЕ',41:'ИСПЫТАНИЕ',44:'ГОРДЫНЯ',45:'МИССИЯ',51:'ПОДВИГ',52:'ЗАВИСТЬ',55:'БРАТСКИЙ СОЮЗ',57:'ЛЕНЬ',62:'ТЩЕСЛАВИЕ',63:'ИНИЦИАЦИЯ',64:'СТРАХ ПЕРЕД ВЕЛИЧИЕМ',72:'ЛЕГЕНДА'};
+const DESCS = {1:'Ты вступил на путь. Каждый мужчина начинает здесь. Поле Лилы — зеркало твоей души.',2:'Первый шаг самый важный. Не важно, как быстро — важно, каждый день.',72:'ЛЕГЕНДА. Ты прошёл путь. Но путь не кончается — он трансформируется. Веди других.'};
+const TASKS = {1:'Напиши 3 качества, ради которых ты здесь.',72:'Возьми на себя одного ученика. Передай то, что узнал.'};
+const SNAKES = {44:22,52:28,57:17,62:38,64:32,68:14};
+const ARROWS = {2:23,16:45,28:55,35:54,41:63,51:68};
+
+let pos = 0;
+const svg = document.getElementById('board');
+
+function getLevel(id) {
+    if (id <= 12) return 1; if (id <= 24) return 2; if (id <= 36) return 3;
+    if (id <= 48) return 4; if (id <= 60) return 5; return 6;
+}
+function getCoord(id) {
+    const rb = Math.floor((id-1)/COLS);
+    const row = ROWS - 1 - rb;
+    let col = (id-1) % COLS;
+    if (rb % 2 === 1) col = COLS - 1 - col;
+    return {row, col};
+}
+
+// Draw cells
+for (let i=1; i<=TOTAL; i++) {
+    const c = getCoord(i);
+    const x = GAP + c.col*(SIZE+GAP);
+    const y = GAP + c.row*(SIZE+GAP);
+    const lvl = getLevel(i);
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.style.cursor = 'pointer';
+    g.onclick = () => showCell(i);
+    
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', x); rect.setAttribute('y', y);
+    rect.setAttribute('width', SIZE); rect.setAttribute('height', SIZE);
+    rect.setAttribute('rx', 6);
+    rect.setAttribute('fill', LEVELS[lvl]);
+    rect.setAttribute('opacity', SNAKES[i] ? '0.7' : ARROWS[i] ? '0.95' : '0.85');
+    g.appendChild(rect);
+    
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', x+SIZE/2); txt.setAttribute('y', y+SIZE/2+4);
+    txt.setAttribute('text-anchor','middle'); txt.setAttribute('fill','white');
+    txt.setAttribute('font-size', i>=10?10:12); txt.setAttribute('font-weight',600);
+    txt.textContent = i;
+    g.appendChild(txt);
+    
+    if (SNAKES[i] || ARROWS[i]) {
+        const sym = document.createElementNS('http://www.w3.org/2000/svg','text');
+        sym.setAttribute('x', x+SIZE/2); sym.setAttribute('y', y+SIZE-4);
+        sym.setAttribute('text-anchor','middle'); sym.setAttribute('fill','white');
+        sym.setAttribute('font-size',10);
+        sym.textContent = SNAKES[i] ? '↓' : '↑';
+        g.appendChild(sym);
+    }
+    
+    svg.appendChild(g);
+}
+
+// Draw lines for snakes/arrows
+[...Object.entries(SNAKES), ...Object.entries(ARROWS)].forEach(([from,to]) => {
+    const a = getCoord(+from), b = getCoord(+to);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', GAP+a.col*(SIZE+GAP)+SIZE/2);
+    line.setAttribute('y1', GAP+a.row*(SIZE+GAP)+SIZE/2);
+    line.setAttribute('x2', GAP+b.col*(SIZE+GAP)+SIZE/2);
+    line.setAttribute('y2', GAP+b.row*(SIZE+GAP)+SIZE/2);
+    line.setAttribute('stroke', SNAKES[from] ? '#EF4444' : '#22C55E');
+    line.setAttribute('stroke-width', 1.5);
+    line.setAttribute('opacity', 0.5);
+    line.setAttribute('stroke-dasharray', SNAKES[from] ? '4 2' : 'none');
+    svg.insertBefore(line, svg.firstChild);
+});
+
+// Player token
+let token;
+function drawToken() {
+    if (token) token.remove();
+    if (pos === 0) return;
+    const c = getCoord(pos);
+    token = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    token.setAttribute('cx', GAP+c.col*(SIZE+GAP)+SIZE/2);
+    token.setAttribute('cy', GAP+c.row*(SIZE+GAP)+SIZE/2);
+    token.setAttribute('r', 9);
+    token.setAttribute('fill', '#C41E3A');
+    token.setAttribute('stroke', 'white');
+    token.setAttribute('stroke-width', 2);
+    svg.appendChild(token);
+}
+
+const diceEl = document.getElementById('dice');
+const hintEl = document.getElementById('hint');
+const posEl = document.getElementById('pos');
+
+function roll() {
+    if (pos >= TOTAL) return;
+    diceEl.classList.add('rolling');
+    diceEl.textContent = '?';
+    hintEl.textContent = 'Бросок...';
+    
+    setTimeout(() => {
+        const val = Math.floor(Math.random()*6)+1;
+        const faces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+        diceEl.textContent = faces[val-1];
+        diceEl.classList.remove('rolling');
+        
+        let newPos = pos + val;
+        if (newPos > TOTAL) newPos = TOTAL - (newPos - TOTAL);
+        pos = newPos;
+        
+        if (SNAKES[pos]) { pos = SNAKES[pos]; hintEl.textContent = 'Змея! Падение...'; }
+        else if (ARROWS[pos]) { pos = ARROWS[pos]; hintEl.textContent = 'Стрела! Взлёт!'; }
+        else { hintEl.textContent = 'Нажми, чтобы бросить'; }
+        
+        posEl.textContent = 'Клетка ' + pos + '/72';
+        drawToken();
+        
+        if (pos === TOTAL) {
+            hintEl.textContent = '🏆 ЛЕГЕНДА! Путь пройден.';
+        }
+        
+        setTimeout(() => showCell(pos), 400);
+    }, 800);
+}
+
+diceEl.onclick = roll;
+
+function showCell(id) {
+    const title = NAMES[id] || ('КЛЕТКА ' + id);
+    const desc = DESCS[id] || `Уровень ${getLevel(id)}. Каждая клетка — урок. Размышляй о своём пути.`;
+    const task = TASKS[id];
+    document.getElementById('m-title').textContent = title;
+    document.getElementById('m-id').textContent = id + '/72';
+    document.getElementById('m-desc').textContent = desc;
+    const tbox = document.getElementById('m-task-box');
+    if (task) { tbox.style.display='block'; document.getElementById('m-task').textContent = task; }
+    else { tbox.style.display='none'; }
+    document.getElementById('modal').classList.add('show');
+}
+function closeModal() {
+    document.getElementById('modal').classList.remove('show');
+}
+document.getElementById('modal').onclick = (e) => {
+    if (e.target.id === 'modal') closeModal();
+};
+</script>
+</body>
+</html>
