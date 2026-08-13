@@ -11,7 +11,7 @@ const config: Config = {
         kemp: {
           dark: "#0a0a0a",
           panel: "#141414",
-          accent: "#c9a96e",
+          accent: "#C41E3A",
           red: "#8B2635",
           orange: "#D4652A",
           yellow: "#E8B923",
