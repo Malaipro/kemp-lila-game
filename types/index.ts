@@ -21,6 +21,14 @@ export interface Player {
 
 export type GamePhase = "idle" | "rolling" | "moving" | "resolving" | "ended";
 
+export interface CellProgress {
+  cellId: number;
+  landedAt: number; // timestamp
+  completed: boolean;
+  completedAt?: number;
+  notes?: string; // что почувствовал/заметил
+}
+
 export interface GameState {
   players: Player[];
   currentPlayerIndex: number;
@@ -32,4 +40,13 @@ export interface GameState {
     to: number;
     viaSnakeOrArrow?: number;
   } | null;
+  progress: Record<string, CellProgress[]>; // playerId -> progress[]
+  currentQuery: string; // запрос игрока
+}
+
+export interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
 }
